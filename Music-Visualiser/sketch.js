@@ -5,7 +5,6 @@ let mic;
 function setup() {
   cnv = createCanvas(989,560);
   cnv.style('padding:20px;');
-  pixelDensity(1);
 
   capture = createCapture(VIDEO);
   capture.hide();
@@ -14,15 +13,25 @@ function setup() {
   mic = new p5.AudioIn();
   mic.start();
   
+  // compressor = new p5.Compressor();
+  // mic.disconnect();
+  // compressor.process(mic);
+  //https://github.com/processing/p5.js-sound/blob/main/examples/Compressor/sketch.js
+  //https://processing.github.io/p5.js-sound/examples/Compressor/
+  // , [0.00], [17.00], [20.00], [0.00], [0.00]
+  
   fft = new p5.FFT();
   fft.setInput(mic);
-  
+
   slider1 = createSlider(0,5,0);
   slider2 = createSlider(0,225,225);
   slider3 = createSlider(0,225,130);
     slider1.position(1038,379);
     slider2.position(1038,310);
     slider3.position(1038,275);
+
+    micSensitivity = createSlider(1,5,4);
+    micSensitivity.position(1188,275);
 
     slider5 = createSlider(0,10,0);
     slider5.position(1038,445);
@@ -45,6 +54,8 @@ function setup() {
   title1 = createP ('Colour Shift');
   title2 = createP ('EQ Spread');
   title5 = createP ('Transform');
+  title6 = createP ('Mic Sensitivity');
+  title6.position(1188,226);
     title1.position(1041,226);
     title2.position(1041,330);
     title5.position(1041,399);
@@ -61,31 +72,30 @@ function setup() {
   paragraph1 = createP ('Best paired with Google Chrome. Ensure the browser mic and camera are accessible. There is a simple SomaFM radio stream embedded above for demonstration - but use whatever you like! Additionally, to test the EQ spectrum, switch on EQ Sweep below to allow a y-controlled noise filter. Thank you.');
     paragraph1.position(1041,0);
     
-  button3 = createImg('Images/expand04.png', 'Full Screen');
-    button3.position(955,537);
+  button3 = createImg('Images/expand05.png', 'Full Screen');
+    button3.position(968,548);
     button3.mousePressed(fullScreen);
+    button3.style("height: 20px;")
     
-  button6 = createImg('Images/exitfull01.png', 'Exit');
-    button6.position(displayWidth-55,displayHeight-40);
+  button6 = createImg('Images/exitfull02.png', 'Exit');
+    button6.position(displayWidth-55, 20);
     button6.mousePressed(fullScreen);
-    button6.style('display:none');
+    button6.style('height: 20px; display: none;');
     
-  button4 = createImg('Images/MenuOpen02.png', 'Menu');
-    button4.position(15,displayHeight-35);
+  button4 = createImg('Images/MenuOpen03.png', 'Menu');
+    button4.position(20, 20);
     button4.mousePressed(fullscreen_menu);
-    button4.style('display:none');
+    button4.style('height: 20px; display: none;');
   
-  button5 = createImg('Images/MenuClose.png', 'Close');
-    button5.position(25,displayHeight-40);
-    button5.style('display:none');
+  button5 = createImg('Images/MenuClose02.png', 'Close');
+    button5.position(20,20);
+    button5.style('height: 20px; display: none;');
     button5.mousePressed(fullscreen_menu_off);
 
 //Fullscreen Visualiser Changes    
     cyNumberChange = 13;
-    spectrumMultiplyer = 1;
-    
+    spectrumMultiplyer = 2;
 }
-
 
 function draw() {
     
@@ -117,13 +127,15 @@ function draw() {
   noStroke();
   fill([HighMids + Highs]*1.5, slider2.value() + Mids, [Lows + LowMids]/2,70*[slider1.value()+1]/1.5);
 
-  for (let cy = 0; cy < capture.height; cy += cyNumberChange) {
+  for (let cy = capture.height; cy > 0; cy -= cyNumberChange) {
     for (let cx = 0; cx < capture.width; cx += 1+slider1.value()) {
-      let offset = ((cy * capture.width) + cx) * 4;
       let xpos = (cx / capture.width) * width;
       let ypos = (cy / capture.height) * height;
-        
-      rect(xpos, ypos, 6-slider1.value(), spectrum[cy] * spectrumMultiplyer * (capture.pixels[offset + 1] / 225)); 
+      let offset = ((cy * capture.width) + cx) * 4;
+      
+      rect(xpos, ypos, 6-slider1.value(), 
+      spectrum[cy] * spectrumMultiplyer * 
+      ((capture.pixels[offset + 1] / 255) / (6-micSensitivity.value()) )); 
     
   //TRANSFORM//
         
@@ -146,6 +158,13 @@ function titleInvisible() {
   title4.style('display:none')
 }
 
+function keyPressed() {
+  if (cnv.width >= 1000 && keyCode === ESCAPE) {
+    key = 0;
+    fullScreen();
+  }
+}
+
 function fullScreen() {
     let fs = fullscreen();
     fullscreen(!fs);
@@ -157,10 +176,12 @@ function fullScreen() {
         title2.style('display:block');
         title3.style('display:block');
         title5.style('display:block');
+        title6.style('display:block');
             slider1.style('display:block');
             slider2.style('display:block');
             slider3.style('display:block');
             slider5.style('display:block');
+            micSensitivity.style('display:block')
                 button1.style('display:block');
                 button2.style('display:block');
         title4.position(450,height/2);
@@ -173,10 +194,12 @@ function fullScreen() {
         title2.position(1041,330);
         title3.position(1041,500);
         title5.position(1041,399);
+        title6.position(1188,226);
             slider1.position(1038,379);
             slider2.position(1038,310);
             slider3.position(1038,275);
             slider5.position(1038,445);
+            micSensitivity.position(1188,275);
                 button1.position(1041,550);
                 button2.position(1101,550);
         paragraph1.style('display:block');
@@ -192,30 +215,29 @@ function fullScreen() {
         title2.style('display:none');
         title3.style('display:none');
         title5.style('display:none');
+        title6.style('display:none');
             slider1.style('display:none');
             slider2.style('display:none');
             slider3.style('display:none');
             slider5.style('display:none');
+            micSensitivity.style('display:none')
                 button1.style('display:none');
                 button2.style('display:none');
         title4.position(800,height/2);
             button3.style('display:none');
             button4.style('display:block');
             button6.style('display:block');
-        title1.position(20,displayHeight-374);
-        title2.position(20,displayHeight-270);
-        title3.position(20,displayHeight-100);
-        title5.position(20,displayHeight-201);  
+        title1.position(22,displayHeight-374);
+        title2.position(22,displayHeight-270);
+        title5.position(22,displayHeight-201); 
+        title6.position(22,displayHeight-120);  
             slider1.position(20,displayHeight-221);
             slider2.position(20,displayHeight-290);
             slider3.position(20,displayHeight-325);
             slider5.position(20,displayHeight-155);
-                button1.position(20,displayHeight-50);
-                button2.position(80,displayHeight-50);
+            micSensitivity.position(20,displayHeight-80);
         paragraph1.style('display:none');
-        
-        
-                      
+                         
     cyNumberChange = 11;
     spectrumMultiplyer = 1.5;
     
@@ -225,17 +247,19 @@ function fullScreen() {
 function fullscreen_menu() {
     title1.style('display:block');
     title2.style('display:block');
-    title3.style('display:block');
+    title3.style('display:none');
     title5.style('display:block');
+    title6.style('display:block');
         slider1.style('display:block');
         slider2.style('display:block');
         slider3.style('display:block');
         slider5.style('display:block');
-            button1.style('display:block');
-            button2.style('display:block');
+        micSensitivity.style('display:block')
+            button1.style('display:none');
+            button2.style('display:none');
     button4.style('display:none');
     button5.style ('display:block');
-    button5.position(250);
+    // button5.position(15);
 }
 
 function fullscreen_menu_off(){
@@ -243,10 +267,12 @@ function fullscreen_menu_off(){
         title2.style('display:none');
         title3.style('display:none');
         title5.style('display:none');
+        title6.style('display:none');
             slider1.style('display:none');
             slider2.style('display:none');
             slider3.style('display:none');
             slider5.style('display:none');
+            micSensitivity.style('display:none')
                 button1.style('display:none');
                 button2.style('display:none');
     button4.style('display:block');
